@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>AI Resume Analyzer</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
@@ -14,45 +14,48 @@
 
     <section class="container">
         
+        <div id="errorMsg" class="error-msg"></div>
+
         <!-- Resume Upload -->
         <div class="card">
             <h2>Upload Resume</h2>
-            <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx">
+            <div class="drop-zone">
+                <span class="drop-icon">📄</span>
+                <div class="drop-text">Click or drag resume here</div>
+                <div class="drop-hint">PDF, DOC, DOCX</div>
+                <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx">
+            </div>
+            <div id="fileName"></div>
         </div>
 
         <!-- Job Description -->
         <div class="card">
             <h2>Job Description</h2>
-            <textarea id="jobDescription" rows="6" 
-            placeholder="Paste job description here..."></textarea>
+            <textarea id="jobDescription" rows="6"
+                placeholder="Paste job description here..."></textarea>
         </div>
 
-        <!-- Analyze Button -ssßS->
+        <!-- Analyze Button -->
         <div class="card">
-            <button onclick="analyzeResume()">Analyze Resume</button>
+            <button id="analyzeBtn" type="button" onclick="analyzeResume()">Analyze Resume</button>
         </div>
 
         <!-- Result Section -->
         <div class="card result" id="resultSection" style="display:none;">
             <h2>Analysis Result</h2>
-            <p><strong>Resume Score:</strong> <span id="score"></span></p>
-            <p><strong>Matched Skills:</strong> <span id="matchedSkills"></span></p>
-            <p><strong>Missing Skills:</strong> <span id="missingSkills"></span></p>
-            <p><strong>Suggestions:</strong> <span id="suggestions"></span></p>
-        </div>
+            
+            <div id="loadingSection" class="loading-pulse" style="display:none;">
+                <div class="spinner"></div>
+                <span id="loadingText">Reading your resume...</span>
+            </div>
 
+            <div id="resultContent" style="display:none;">
+                <!-- Filled dynamically by script.js -->
+            </div>
+        </div>
     </section>
 
-<script>
-function analyzeResume() {
-    // Dummy Result (for HTML demo purpose)
-    document.getElementById("resultSection").style.display = "block";
-    document.getElementById("score").innerText = "82/100";
-    document.getElementById("matchedSkills").innerText = "HTML, CSS, JavaScript";
-    document.getElementById("missingSkills").innerText = "React, Node.js";
-    document.getElementById("suggestions").innerText = "Add more project details and measurable achievements.";
-}
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>

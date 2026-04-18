@@ -1,0 +1,294 @@
+Style · CSS
+Copy
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+ 
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f4f6f9;
+  color: #1a1a1a;
+}
+ 
+header {
+  background: #1a1a2e;
+  color: white;
+  text-align: center;
+  padding: 2rem 1rem;
+}
+ 
+header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+ 
+header p {
+  margin-top: 0.5rem;
+  color: #a0aec0;
+  font-size: 1rem;
+}
+ 
+.container {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+ 
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+ 
+.card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #4a5568;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+ 
+/* --- Drop Zone --- */
+.drop-zone {
+  border: 2px dashed #cbd5e0;
+  border-radius: 10px;
+  padding: 2rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+ 
+.drop-zone:hover {
+  background: #f7fafc;
+}
+ 
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+ 
+.drop-zone .drop-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+ 
+.drop-zone .drop-text {
+  font-size: 0.9rem;
+  color: #718096;
+}
+ 
+.drop-zone .drop-hint {
+  font-size: 0.78rem;
+  color: #a0aec0;
+  margin-top: 4px;
+}
+ 
+#fileName {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3182ce;
+  margin-top: 8px;
+}
+ 
+/* --- Textarea --- */
+textarea {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-family: 'Segoe UI', sans-serif;
+  color: #1a1a1a;
+  background: #fff;
+  resize: vertical;
+  min-height: 130px;
+  transition: border-color 0.2s;
+}
+ 
+textarea:focus {
+  outline: none;
+  border-color: #3182ce;
+}
+ 
+/* --- Button --- */
+button {
+  width: 100%;
+  padding: 0.85rem;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+ 
+button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+ 
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+ 
+/* --- Error message --- */
+.error-msg {
+  background: #fff5f5;
+  color: #c53030;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.88rem;
+  margin-bottom: 1rem;
+  display: none;
+}
+ 
+/* --- Result Card --- */
+.result {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+ 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+ 
+/* --- Score Row --- */
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+ 
+.score-circle {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+ 
+.score-label {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-bottom: 2px;
+}
+ 
+.score-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+ 
+.score-summary {
+  font-size: 0.88rem;
+  color: #4a5568;
+  margin-top: 4px;
+  line-height: 1.5;
+}
+ 
+/* --- Pills --- */
+.section-block {
+  margin-bottom: 1rem;
+}
+ 
+.section-block-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+ 
+.pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+ 
+.pill {
+  font-size: 0.78rem;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+ 
+.pill-green { background: #f0fff4; color: #276749; }
+.pill-red   { background: #fff5f5; color: #c53030; }
+ 
+/* --- Suggestions --- */
+.suggestion-list {
+  list-style: none;
+  padding: 0;
+}
+ 
+.suggestion-list li {
+  display: flex;
+  gap: 8px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #2d3748;
+}
+ 
+.suggestion-list li:last-child {
+  border-bottom: none;
+}
+ 
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #a0aec0;
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+ 
+/* --- Loading --- */
+.loading-pulse {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
+ 
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #1a1a2e;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+ 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+ 
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  header h1 { font-size: 1.4rem; }
+  .score-circle { width: 58px; height: 58px; font-size: 1.1rem; }
+}
