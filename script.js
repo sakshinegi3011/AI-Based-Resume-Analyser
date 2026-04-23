@@ -2,9 +2,12 @@
 // Replace with your actual Supabase project URL and anon key
 const SUPABASE_URL = "https://rsxphzwtwybrcmiudmnv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzeHBoend0d3licmNtaXVkbW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MzU3MzIsImV4cCI6MjA5MjExMTczMn0.5pjW5cy7pCDE7Fm4z80zLrgmxuh9aRUQSNY9vljfFfg";
- 
-// Get your free Gemini API Key from: https://aistudio.google.com/
-const GEMINI_API_KEY = "AIzaSyBU-_7HaLP_cgEaXZJZ6i36PVptg3Ddk_g";
+
+/**
+ * 🔒 SECURITY NOTE: 
+ * To prevent your API key from being revealed, you should move the Gemini call 
+ * to a Supabase Edge Function. For now, I've added a fallback.
+ */
  
 // ─── STATE ────────────────────────────────────────────────
 let resumeText = "";
@@ -23,10 +26,19 @@ const errorMsg       = document.getElementById("errorMsg");
 // ─── LOADING MESSAGES ─────────────────────────────────────
 const loadingMessages = [
   "Reading your resume…",
+  "Checking for previous analysis…",
   "Matching skills against the job…",
   "Identifying gaps and strengths…",
   "Crafting personalized suggestions…"
 ];
+
+// ─── UTILS: HASHING FOR CACHING ──────────────────────────
+async function generateHash(text) {
+  const msgUint8 = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
  
 // ─── FILE UPLOAD ──────────────────────────────────────────
 fileInput.addEventListener("change", async (e) => {
@@ -82,97 +94,107 @@ async function analyzeResume() {
   }, 1800);
  
   try {
-    // 1. Call your backend API (which holds your Anthropic key securely)
+    // 1. GENERATE HASH FOR CACHING
+    const contentToHash = resumeText + jobDesc;
+    const contentHash = await generateHash(contentToHash);
+
+    // 2. CHECK CACHE (Supabase)
+    loadingText.textContent = "Checking for previous analysis...";
+    const cachedData = await getFromCache(contentHash);
+    
+    if (cachedData) {
+      console.log("Cache hit! Restoring previous analysis.");
+      clearInterval(msgInterval);
+      renderResult(cachedData);
+      return;
+    }
+
+    // 3. CALL API
+    loadingText.textContent = "Analyzing with AI...";
     const result = await callAnalysisAPI(resumeText, jobDesc);
  
     clearInterval(msgInterval);
  
-    // 2. Save result to Supabase
+    // 4. SAVE TO DB
     await saveToDatabase({
       resume_name:    resumeFileName,
       job_description: jobDesc.slice(0, 500),
       score:          result.score,
+      score_label:    result.score_label,
       matched_skills: result.matched_skills,
       missing_skills: result.missing_skills,
       suggestions:    result.suggestions,
       summary:        result.overall_summary,
+      content_hash:   contentHash
     });
  
-    // 3. Render results
+    // 5. RENDER RESULTS
     renderResult(result);
  
   } catch (err) {
     clearInterval(msgInterval);
     loadingSection.style.display = "none";
-    showError("Something went wrong. Please try again.");
+    showError(err.message || "Something went wrong. Please try again.");
     console.error(err);
   } finally {
     analyzeBtn.disabled = false;
   }
 }
- 
-// ─── API CALL (Gemini Integration) ─────────────────────────────
-async function callAnalysisAPI(resume, jobDesc) {
-  if (GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" || !GEMINI_API_KEY) {
-      throw new Error("Please insert your Gemini API Key at the top of script.js");
-  }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-  
-  const promptText = `
-You are an expert ATS (Applicant Tracking System) and AI Resume Analyzer.
-Analyze the following resume against the provided job description.
-Return ONLY a valid JSON object with the following exact structure, no markdown, no other text:
-{
-  "score": (number between 0 and 100 based on match),
-  "score_label": ("Excellent Match", "Good Match", "Fair Match", etc.),
-  "overall_summary": (1-2 sentence summary of fit),
-  "matched_skills": [array of skills],
-  "missing_skills": [array of skills],
-  "suggestions": [array of actionable resume tips]
-}
-
-Job Description:
-${jobDesc}
-`;
-
-  let parts = [];
-  
-  // If the resume is a DataURL (e.g., from a PDF), we send it as an inline file
-  if (resume.startsWith("data:")) {
-    const mimeType = resume.split(';')[0].split(':')[1];
-    const base64Data = resume.split(',')[1];
-    parts.push({
-      inlineData: { mimeType: mimeType, data: base64Data }
-    });
-    parts.push({ text: promptText + "\n\n(Resume is provided as an attached document above.)" });
-  } else {
-    // If it's pure text, just append it
-    parts.push({ text: promptText + "\n\nResume:\n" + resume });
-  }
-
+// ─── CACHE HELPER ─────────────────────────────────────────
+async function getFromCache(hash) {
   try {
-    const response = await fetch(endpoint, {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: parts }],
-        generationConfig: { temperature: 0.2 },
-      }),
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/resume_analyses?content_hash=eq.${hash}&select=*`, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data && data.length > 0) {
+        const d = data[0];
+        return {
+            score: d.score,
+            score_label: d.score_label,
+            overall_summary: d.summary,
+            matched_skills: d.matched_skills,
+            missing_skills: d.missing_skills,
+            suggestions: d.suggestions
+        };
+    }
+    return null;
+  } catch (e) {
+    console.warn("Cache check failed", e);
+    return null;
+  }
+}
+ 
+// ─── API CALL (Supabase Edge Function) ─────────────────────────────
+async function callAnalysisAPI(resume, jobDesc) {
+  const functionUrl = `${SUPABASE_URL}/functions/v1/analyze-resume`;
+  
+  try {
+    const response = await fetch(functionUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ resume, jobDesc })
     });
 
-    if (!response.ok) throw new Error("API call failed: " + await response.text());
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Analysis failed via Edge Function");
+    }
 
     const data = await response.json();
-    const rawText = data.candidates[0].content.parts[0].text;
-    
-    // Clean up markdown code blocks if the AI returns them
-    const jsonText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    return JSON.parse(jsonText);
+    return data;
   } catch (error) {
-    console.error("Gemini Error:", error);
-    throw new Error("Failed to process resume with Gemini.");
+    console.error("Edge Function Error:", error);
+    throw new Error("Failed to process resume. Ensure your Edge Function is deployed.");
   }
 } 
 // ─── SUPABASE SAVE ────────────────────────────────────────
